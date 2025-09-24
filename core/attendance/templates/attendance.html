@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Face Recognition Attendance</title>
+  <style>
+    video { border: 1px solid black; width: 400px; height: 300px; }
+    canvas { display: none; }
+    #status { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Face Recognition Attendance</h2>
+  <video id="video" autoplay></video>
+  <br>
+  <button id="snap">Mark Attendance</button>
+  <div id="status"></div>
+
+  <canvas id="canvas" width="400" height="300"></canvas>
+
+  <script>
+    const video = document.getElementById("video");
+    const canvas = document.getElementById("canvas");
+    const snapBtn = document.getElementById("snap");
+    const statusDiv = document.getElementById("status");
+
+    // Access webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => { video.srcObject = stream; })
+      .catch(err => { statusDiv.innerText = "Error accessing camera: " + err; });
+
+    snapBtn.addEventListener("click", () => {
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob(blob => {
+        const formData = new FormData();
+        formData.append("image", blob, "capture.jpg");
+
+        fetch("/api/attendance/mark/", {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4NjMwMzMwLCJpYXQiOjE3NTg2MzAwMzAsImp0aSI6IjgzNmI0MzdmZGRjMTQ0ZTliZmU0MmE1YzIzZjM0N2JjIiwidXNlcl9pZCI6IjMifQ.AUdJzhkzEFgUWlw9XysIV4U3iYhMzy2R7sAumJln2-k"
+          },
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          console.log(data);
+          statusDiv.innerText = JSON.stringify(data);
+        })
+        .catch(err => {
+          statusDiv.innerText = "Error: " + err;
+        });
+      }, "image/jpeg");
+    });
+  </script>
+</body>
+</html>
