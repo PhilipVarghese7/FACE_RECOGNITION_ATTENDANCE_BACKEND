@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login - Face Rec Attendance</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #e3f2fd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  .container {
+    background: #fff;
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    width: 400px;
+  }
+  h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #1976d2;
+  }
+  input, button {
+    width: 100%;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+  }
+  button {
+    background: #1976d2;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  button:hover {
+    background: #1565c0;
+  }
+  .message {
+    margin-top: 10px;
+    font-weight: bold;
+    color: red;
+    text-align: center;
+  }
+  a {
+    display: block;
+    text-align: center;
+    margin-top: 15px;
+    color: #1976d2;
+    text-decoration: none;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h2>Login</h2>
+  <form id="loginForm">
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
+  <div class="message" id="message"></div>
+  <a href="/api/auth/signup-page/">Don't have an account? Signup</a>
+</div>
+
+<script>
+const form = document.getElementById("loginForm");
+const messageDiv = document.getElementById("message");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const data = {
+    username: document.getElementById("username").value,
+    password: document.getElementById("password").value
+  };
+
+  const res = await fetch("/api/auth/login/", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+
+  const result = await res.json();
+
+  if(res.ok) {
+    localStorage.setItem("accessToken", result.access);
+    localStorage.setItem("refreshToken", result.refresh);
+    window.location.href = "/api/page/";  // redirect to students page
+  } else {
+    messageDiv.innerText = result.detail || "Login failed";
+  }
+});
+</script>
+</body>
+</html>

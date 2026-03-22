@@ -1,58 +1,129 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Face Recognition Attendance</title>
-  <style>
-    video { border: 1px solid black; width: 400px; height: 300px; }
-    canvas { display: none; }
-    #status { margin-top: 10px; font-weight: bold; }
-  </style>
+<meta charset="UTF-8">
+<title>Attendance - Face Rec</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #e3f2fd;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 900px;
+    margin: 40px auto;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: 30px;
+  }
+  h2 { color: #1976d2; text-align: center; }
+  video { border: 1px solid #1976d2; border-radius: 8px; width: 100%; max-width: 400px; height: auto; }
+  button { background: #1976d2; color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+  button:hover { background: #1565c0; }
+  #status { margin-top: 10px; font-weight: bold; color: green; }
+  table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+  th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+  th { background: #1976d2; color: white; }
+  img { width: 50px; height: 50px; border-radius: 4px; }
+</style>
 </head>
 <body>
-  <h2>Face Recognition Attendance</h2>
+<div class="container">
+  <h2>Mark Attendance</h2>
   <video id="video" autoplay></video>
   <br>
   <button id="snap">Mark Attendance</button>
   <div id="status"></div>
 
-  <canvas id="canvas" width="400" height="300"></canvas>
+  <h3>Student Attendance History</h3>
+  <table id="studentTable">
+    <thead>
+      <tr><th>Roll No</th><th>Name</th><th>Photo</th><th>Marked At</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-  <script>
-    const video = document.getElementById("video");
-    const canvas = document.getElementById("canvas");
-    const snapBtn = document.getElementById("snap");
-    const statusDiv = document.getElementById("status");
+  <h3>Guest Attendance History</h3>
+  <table id="guestTable">
+    <thead>
+      <tr><th>Photo</th><th>Marked At</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
 
-    // Access webcam
-    navigator.mediaDevices.getUserMedia({ video: true })
-      .then(stream => { video.srcObject = stream; })
-      .catch(err => { statusDiv.innerText = "Error accessing camera: " + err; });
+  <canvas id="canvas" width="400" height="300" style="display:none;"></canvas>
+</div>
 
-    snapBtn.addEventListener("click", () => {
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob(blob => {
-        const formData = new FormData();
-        formData.append("image", blob, "capture.jpg");
+<script>
+const token = localStorage.getItem("accessToken");
+if(!token) window.location.href = "/api/auth/login-page/";
 
-        fetch("/api/attendance/mark/", {
-          method: "POST",
-          headers: {
-            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU4NjMwMzMwLCJpYXQiOjE3NTg2MzAwMzAsImp0aSI6IjgzNmI0MzdmZGRjMTQ0ZTliZmU0MmE1YzIzZjM0N2JjIiwidXNlcl9pZCI6IjMifQ.AUdJzhkzEFgUWlw9XysIV4U3iYhMzy2R7sAumJln2-k"
-          },
-          body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-          console.log(data);
-          statusDiv.innerText = JSON.stringify(data);
-        })
-        .catch(err => {
-          statusDiv.innerText = "Error: " + err;
-        });
-      }, "image/jpeg");
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const snapBtn = document.getElementById("snap");
+const statusDiv = document.getElementById("status");
+const studentBody = document.querySelector("#studentTable tbody");
+const guestBody = document.querySelector("#guestTable tbody");
+
+// Camera
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then(stream => { video.srcObject = stream; })
+  .catch(err => { statusDiv.innerText = "Error accessing camera: " + err; });
+
+// Fetch attendance histories
+async function loadAttendance() {
+  try {
+    // Students
+    let res = await fetch("/students/", { headers: { "Authorization": "Bearer " + token } });
+    const students = await res.json();
+    studentBody.innerHTML = "";
+    students.forEach(s => {
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${s.student.roll_no}</td><td>${s.student.name}</td><td><img src="${s.photo}"/></td><td>${new Date(s.marked_at).toLocaleString()}</td>`;
+      studentBody.appendChild(row);
     });
-  </script>
+
+    // Guests
+    res = await fetch("/guests/", { headers: { "Authorization": "Bearer " + token } });
+    const guests = await res.json();
+    guestBody.innerHTML = "";
+    guests.forEach(g => {
+      const row = document.createElement("tr");
+      row.innerHTML = `<td><img src="${g.image}"/></td><td>${new Date(g.marked_at).toLocaleString()}</td>`;
+      guestBody.appendChild(row);
+    });
+
+  } catch(err) {
+    statusDiv.innerText = "Error loading attendance: " + err;
+  }
+}
+
+// Mark attendance
+snapBtn.addEventListener("click", () => {
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.toBlob(blob => {
+    const formData = new FormData();
+    formData.append("image", blob, "capture.jpg");
+
+    fetch("/mark/", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + token },
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      statusDiv.innerText = data.message || "Attendance marked";
+      loadAttendance();
+    })
+    .catch(err => { statusDiv.innerText = "Error: " + err; });
+  }, "image/jpeg");
+});
+
+// Initial load
+loadAttendance();
+</script>
 </body>
 </html>

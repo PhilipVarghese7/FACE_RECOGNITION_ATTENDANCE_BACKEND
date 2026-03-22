@@ -5,12 +5,17 @@ from rest_framework import status
 from .models import Student
 from .serializers import StudentSerializer
 from .face_utils import get_embedding
+from django.shortcuts import render
+
+def students_page(request):
+    return render(request, "students.html")
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def students_list_create(request):
     if request.method == 'GET':
-        students = Student.objects.all()
+        # ✅ Only fetch students for this logged-in user
+        students = Student.objects.filter(user=request.user)
         serializer = StudentSerializer(students, many=True)
         return Response(serializer.data)
 
@@ -26,7 +31,8 @@ def students_list_create(request):
             if embedding is None:
                 return Response({"error": "No face detected"}, status=status.HTTP_400_BAD_REQUEST)
 
-            student = serializer.save(embedding=embedding)
+            # ✅ Save with the logged-in user
+            student = serializer.save(user=request.user, embedding=embedding)
             return Response(StudentSerializer(student).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -35,7 +41,8 @@ def students_list_create(request):
 @permission_classes([IsAuthenticated])
 def student_detail(request, pk):
     try:
-        student = Student.objects.get(pk=pk)
+        # ✅ Only allow access to own students
+        student = Student.objects.get(pk=pk, user=request.user)
     except Student.DoesNotExist:
         return Response(status=status.HTTP_404_NOT_FOUND)
 

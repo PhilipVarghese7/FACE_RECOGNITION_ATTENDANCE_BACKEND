@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Face Rec Attendance System</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; }
+    .container {
+      max-width: 900px;
+      margin: 50px auto;
+      text-align: center;
+      padding: 20px;
+      background: #fff;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    h1 { font-size: 2.5em; margin-bottom: 20px; color: #2196F3; }
+    p { font-size: 1.2em; margin-bottom: 40px; color: #555; }
+    .btn {
+      display: inline-block;
+      margin: 15px;
+      padding: 15px 30px;
+      font-size: 1em;
+      font-weight: bold;
+      text-decoration: none;
+      color: #fff;
+      background: linear-gradient(45deg, #2196F3, #21CBF3);
+      border-radius: 50px;
+      transition: all 0.3s ease;
+    }
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(33, 203, 243, 0.4);
+    }
+    footer { margin-top: 40px; font-size: 0.9em; color: #777; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Face Rec Attendance System</h1>
+    <p>Effortless attendance tracking using face recognition technology. Secure, fast, and modern.</p>
+
+    <!-- Use the URL paths defined in Django URLs -->
+    <a class="btn" href="/api/auth/signup-page/">Signup</a>
+    <a class="btn" href="/api/auth/login-page/">Login</a>
+    <a class="btn" href="/live/">Mark Attendance</a>
+    <a class="btn" href="/api/page/">Student Logs</a>
+    <a class="btn" href="/today/">Today's Attendance</a>
+    <a class="btn",href="">Guest logs</a>
+
+    <footer>
+      &copy; 2025 Face Rec Attendance System. All rights reserved.
+    </footer>
+  </div>
+</body>
+</html>

@@ -9,3 +9,13 @@ from .serializers import UserSerializer
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+
+def signup_page(request):
+    return render(request, "signup.html")
+
+def login_page(request):
+    return render(request, "login.html")
+
+def home_page(request):
+    return render(request, "index.html")
